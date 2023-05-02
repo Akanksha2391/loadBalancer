@@ -6,6 +6,7 @@ import json
 import requests
 import concurrent
 from concurrent.futures import ThreadPoolExecutor
+import time
 # algo
 # server
 # how to send request and process them
@@ -21,16 +22,19 @@ threads = 20
 ALGO = ''
 pcktSize = 0
 pcktNum = 0
+max_time = 0
+min_time = 1e4
+total_time = 0
 
 ITER = cycle(server_pool)
 
 
 def round_robin(iter):
     ports = []
-    print(pcktNum)
+    # print(pcktNum)
     for r in range(0, pcktNum):
         ports.append(next(iter)[1])
-    print(ports)
+    # print(ports)
     sendReq(ports)
     #  return next(iter)
 
@@ -47,22 +51,40 @@ def round_robin(iter):
 #     heapq.heappush(server)
 
 
-def get_character_info(port, index):
-    print(index)
-    r = requests.get(f'{base_url}{port}/', params={"reqNum":index})
+def test_req(port, index):
+    global max_time,min_time,total_time
+    # print(index)
+    start_time = time.time()
+    r = requests.get(f'{base_url}{port}/', params={"reqNum": index})
+    end_time = time.time()
+    req_time = end_time - start_time
+    max_time = max(max_time, req_time)
+    min_time = min(min_time, req_time)
+    total_time += req_time
+
+
     return r.json()
+
+def req_analysis(data):
+    global max_time,min_time,total_time,pcktNum
+    print("max time for a single request:", max_time)
+    print("min time for a single request:", min_time)
+    print("avg time taken:", total_time/pcktNum)
+
 
 
 def sendReq(ports):
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        future_to_url = {executor.submit(get_character_info, port,index)
-                         for index , port in enumerate(ports)}
+        future_to_url = {executor.submit(test_req, port, index)
+                         for index, port in enumerate(ports)}
         for future in concurrent.futures.as_completed(future_to_url):
             try:
                 data = future.result()
                 print(data)
             except Exception as e:
                 print('Looks like something went wrong:', e)
+            
+        req_analysis(data)
 
 
 # #################################################
@@ -72,7 +94,7 @@ async def hello(websocket):
     global pcktNum
     data = await websocket.recv()
     msg = json.loads(data)
-    print(f"<<< {msg}")
+
     ALGO = msg["method"]
     pcktNum = msg["number"]
     pcktSize = msg["size"]

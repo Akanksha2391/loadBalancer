@@ -14,12 +14,19 @@ let activeConnections = 0;
 //   console.log('Client disconnected. Total active connections:', activeConnections);
 // });
 
-app.use(function(req,res,next){setTimeout(next,1000)});
+//app.use(function(req,res,next){setInterval(next,10000)});
 
-app.get('/', (req, res) => {
+async function wait (ms) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, ms)
+  });
+}
+
+app.get('/', async(req, res) => {
   activeConnections++;
-  console.log(req.params);
-  res.json({ 'activConnections': activeConnections, 'port': 8080, 'reqNum': req.params.reqNum });
+  await wait(5*1000);
+  console.log(req.query);
+  res.json({ 'activConnections': activeConnections, 'port': 8080, 'reqNum': req.query.reqNum });
   res.end();
 });
 
