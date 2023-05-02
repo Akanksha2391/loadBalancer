@@ -19,7 +19,7 @@ server_pool = [(10, 8080),
 
 base_url = 'http://localhost:'
 threads = 20
-ALGO = ''
+ALGO = 0
 pcktSize = 0
 pcktNum = 0
 max_time = 0
@@ -37,6 +37,23 @@ def round_robin(iter):
     # print(ports)
     sendReq(ports)
     #  return next(iter)
+
+
+class WeightedRoundRobin:
+    def __init__(self, hosts):
+        self.hosts = hosts
+        self.cycle = cycle(hosts)
+        self.current_weight = {host: weight for host, weight in hosts}
+
+    def get_next_host(self):
+        while True:
+            host, weight = next(self.cycle)
+            if weight > 0:
+                self.current_weight[host] -= 1
+                if self.current_weight[host] == 0:
+                    self.current_weight[host] = weight
+                return host
+
 
 
 # for reqNumber in range(10):
@@ -102,7 +119,9 @@ async def hello(websocket):
     if ALGO == 0:
         round_robin(ITER)
     elif ALGO == 1:
-        weighted_roundRobin()
+        lb = WeightedRoundRobin(ITER)
+        print(lb)
+
 
 
 async def main():
