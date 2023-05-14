@@ -1,8 +1,3 @@
-# which algo
-# number of packets
-# size of packet
-# use websockets
-
 import asyncio
 import websockets
 import json
@@ -14,26 +9,27 @@ LEAST_CONNECTION = 2
 WEIGHTED_LEAST_CONNECTION = 3
 
 numPckts = 10
-sizePckts = 256
+sizePckts = 500
 
-msg = {"method": ROUND_ROBIN,
+# parameters for the load balancer
+
+params = {"method": ROUND_ROBIN,
        "number": numPckts,
        "size": sizePckts}
 
-data = json.dumps(msg)
+data = json.dumps(params)
 
+# function to pass the pckt num, pckt size and choosen algo to loadbalancer
+# using websockets
 
 async def handler():
     uri = "ws://localhost:3000"
     async with websockets.connect(uri) as websocket:
-        # name = input("What's your name? ")
 
         await websocket.send(data)
-        print("msg sent")
+        print("parameters sent to loadbalancer")
         print(f">>> {data}")
 
-        # greeting = await websocket.recv()
-        # print(f"<<< {greeting}")
 
 if __name__ == "__main__":
     asyncio.run(handler())

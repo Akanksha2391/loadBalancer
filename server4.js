@@ -32,14 +32,11 @@ async function wait (ms) {
 
 app.get('/', async (req, res) => {
   activeConnections++;
-  console.log('before res', new Date());
-  //await wait(5*1000);
- 
-  console.log(req.query);
-  for(let i=0;i<1000000000;i++);
+  delay = Number(req.query.pcktSize)/Number(req.query.weight);
+  //delay due to processing
+  for(let i=0;i<delay*100000000;i++);
 
   res.json({ 'activConnections': activeConnections, 'port': 6999, 'reqNum': req.query.reqNum });
-  //await wait (5*1000);
   console.log('after res', new Date());
   //res.end();
 });
